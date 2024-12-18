@@ -12,6 +12,8 @@ import IconButton from '@mui/material/IconButton'
 import Button from '@mui/material/Button'
 import DeleteIcon from '@mui/icons-material/Delete'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
+import { FaEye } from 'react-icons/fa'
+
 
 // Third-party Imports
 import { rankItem } from '@tanstack/match-sorter-utils'
@@ -43,7 +45,7 @@ const personData = [
 // Fuzzy Filter Function
 const fuzzyFilter: FilterFn<any> = (row, columnId, value) => {
   const itemRank = rankItem(row.getValue(columnId), value)
-  
+
   return itemRank.passed
 }
 
@@ -99,6 +101,9 @@ const DepartmentTable = () => {
             <IconButton>
               <MoreVertIcon />
             </IconButton>
+            <IconButton title="Detayları Gör">
+            <FaEye />
+          </IconButton>
           </div>
         )
       }

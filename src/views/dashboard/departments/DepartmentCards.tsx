@@ -1,6 +1,8 @@
 import React from 'react'
 import Link from 'next/link'
-import { Box, Grid, Card, CardContent, Typography, Button } from '@mui/material'
+import { Box, Grid, Card, CardContent, Typography, Button, IconButton } from '@mui/material'
+import { FaEye } from 'react-icons/fa'
+import {fakeDepartments } from '@/utils/fakeData'
 
 const DepartmentCards = () => {
   const departments = [
@@ -62,7 +64,9 @@ const DepartmentCards = () => {
                       minWidth: 0
                     }}
                   >
-                    Düzenle
+                    <IconButton title="Detayları Gör">
+                      <FaEye />
+                    </IconButton>
                   </Button>
                 </Box>
               </CardContent>
