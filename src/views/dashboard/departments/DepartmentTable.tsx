@@ -1,9 +1,6 @@
 'use client'
 
-// React Imports
-import { useMemo, useState } from 'react'
-
-// MUI Imports
+import React, { useMemo, useState } from 'react'
 import Card from '@mui/material/Card'
 import Checkbox from '@mui/material/Checkbox'
 import TablePagination from '@mui/material/TablePagination'
@@ -13,9 +10,6 @@ import Button from '@mui/material/Button'
 import DeleteIcon from '@mui/icons-material/Delete'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import { FaEye } from 'react-icons/fa'
-
-
-// Third-party Imports
 import { rankItem } from '@tanstack/match-sorter-utils'
 import {
   createColumnHelper,
@@ -26,37 +20,34 @@ import {
   getPaginationRowModel
 } from '@tanstack/react-table'
 import type { ColumnDef, FilterFn } from '@tanstack/react-table'
+import { Box } from '@mui/material'
+import DebouncedInput from '../../components/DebouncedInput'
 
-import TablePaginationComponent from '@/components/TablePaginationComponent'
+// Props for DepartmentTable
+interface Person {
+  id: number
+  name: string
+  role: string
+  email: string
+  phone: string
+  departmentName?: string
+}
 
-// Veri: Görseldeki tabloya uygun olarak düzenlendi
-const personData = [
-  { id: 1, name: 'Jordan Stevenson', role: 'Departman Sorumlusu', email: 'smthng@gmail.com', phone: '5316258798' },
-  { id: 2, name: 'Richard Payne', role: 'Çalışan', email: 'smthng@gmail.com', phone: '5316258798' },
-  { id: 3, name: 'Jennifer Summers', role: 'Çalışan', email: 'smthng@gmail.com', phone: '5316258798' },
-  { id: 4, name: 'Mr. Justin Richardson', role: 'Elektrikçi', email: 'smthng@gmail.com', phone: '5316258798' },
-  { id: 5, name: 'Nicholas Tanner', role: 'Tesisatçı', email: 'smthng@gmail.com', phone: '5316258798' },
-  { id: 6, name: 'Crystal Mays', role: 'Saha Personeli', email: 'smthng@gmail.com', phone: '5316258798' },
-  { id: 7, name: 'Mary Garcia', role: 'Saha Personeli', email: 'smthng@gmail.com', phone: '5316258798' },
-  { id: 8, name: 'Megan Roberts', role: 'Çalışan', email: 'smthng@gmail.com', phone: '5316258798' },
-  { id: 9, name: 'Joseph Oliver', role: 'Saha Personeli', email: 'smthng@gmail.com', phone: '5316258798' }
-]
+interface DepartmentTableProps {
+  users: Person[]
+}
 
-// Fuzzy Filter Function
 const fuzzyFilter: FilterFn<any> = (row, columnId, value) => {
   const itemRank = rankItem(row.getValue(columnId), value)
-
   return itemRank.passed
 }
 
-// Column Helper
-const columnHelper = createColumnHelper<typeof personData[0]>()
+const columnHelper = createColumnHelper<Person>()
 
-const DepartmentTable = () => {
-  const [data] = useState(personData)
+const DepartmentTable: React.FC<DepartmentTableProps> = ({ users }) => {
   const [globalFilter, setGlobalFilter] = useState('')
 
-  const columns = useMemo<ColumnDef<typeof personData[0], any>[]>(
+  const columns = useMemo<ColumnDef<Person, any>[]>(
     () => [
       {
         id: 'select',
@@ -93,17 +84,17 @@ const DepartmentTable = () => {
       {
         id: 'actions',
         header: '',
-        cell: () => (
+        cell: ({ row }) => (
           <div style={{ display: 'flex', gap: '8px' }}>
-            <IconButton>
-              <DeleteIcon />
+            <IconButton title="Detayları Gör" onClick={() => handleViewDetails(row.original.id)}>
+              <FaEye />
             </IconButton>
-            <IconButton>
+            <IconButton title="Yetkiler" onClick={() => handlePermissions(row.original.id)}>
               <MoreVertIcon />
             </IconButton>
-            <IconButton title="Detayları Gör">
-            <FaEye />
-          </IconButton>
+            <IconButton title="Sil" onClick={() => handleDelete(row.original.id)}>
+              <DeleteIcon />
+            </IconButton>
           </div>
         )
       }
@@ -111,15 +102,15 @@ const DepartmentTable = () => {
     []
   )
 
+  const handleDelete = (id: number) => console.log(`Kullanıcı ID: ${id} silindi.`)
+  const handlePermissions = (id: number) => console.log(`Yetkiler düzenlenecek: ${id}`)
+  const handleViewDetails = (id: number) => console.log(`Detayları görüntüle: ${id}`)
+
   const table = useReactTable({
-    data,
+    data: users,
     columns,
-    filterFns: {
-      fuzzy: fuzzyFilter
-    },
-    state: {
-      globalFilter
-    },
+    filterFns: { fuzzy: fuzzyFilter },
+    state: { globalFilter },
     globalFilterFn: fuzzyFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -128,45 +119,24 @@ const DepartmentTable = () => {
 
   return (
     <Card sx={{ p: 3, boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)' }}>
-      {/* Üst kısım: Solda arama, sağda buton */}
-      <div className="flex justify-between items-center mb-4">
-        <input
-          type="text"
-          placeholder="Kullanıcı Ara"
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
+        <DebouncedInput
           value={globalFilter}
-          onChange={e => setGlobalFilter(e.target.value)}
-          style={{
-            padding: '8px',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            width: '200px'
-          }}
+          onChange={value => setGlobalFilter(value.toString())}
+          placeholder="Kullanıcı Ara"
+          debounce={500}
         />
-        <Button variant="contained" sx={{ textTransform: 'none', fontWeight: 500 }}>
-          + Departmana Kullanıcı Ekle
-        </Button>
-      </div>
+        <Button variant="contained">+ Departmana Kullanıcı Ekle</Button>
+      </Box>
 
-      {/* Tablo */}
       <div className="overflow-x-auto">
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id} style={{ borderBottom: '2px solid #e0e0e0' }}>
+              <tr key={headerGroup.id}>
                 {headerGroup.headers.map(header => (
-                  <th
-                    key={header.id}
-                    style={{
-                      textAlign: 'left',
-                      padding: '12px',
-                      fontWeight: 'bold',
-                      color: '#757575',
-                      fontSize: '14px'
-                    }}
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  <th key={header.id} style={{ padding: '12px', textAlign: 'left' }}>
+                    {flexRender(header.column.columnDef.header, header.getContext())}
                   </th>
                 ))}
               </tr>
@@ -174,17 +144,9 @@ const DepartmentTable = () => {
           </thead>
           <tbody>
             {table.getRowModel().rows.map(row => (
-              <tr key={row.id} style={{ borderBottom: '1px solid #e0e0e0' }}>
+              <tr key={row.id}>
                 {row.getVisibleCells().map(cell => (
-                  <td
-                    key={cell.id}
-                    style={{
-                      textAlign: 'left',
-                      padding: '12px',
-                      color: '#424242',
-                      fontSize: '14px'
-                    }}
-                  >
+                  <td key={cell.id} style={{ padding: '12px' }}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -194,15 +156,15 @@ const DepartmentTable = () => {
         </table>
       </div>
 
-      {/* Pagination */}
       <TablePagination
-        component={() => <TablePaginationComponent table={table} />}
+        component="div"
         count={table.getFilteredRowModel().rows.length}
-        rowsPerPage={table.getState().pagination.pageSize}
         page={table.getState().pagination.pageIndex}
-        onPageChange={(_, page) => {
-          table.setPageIndex(page)
-        }}
+        onPageChange={(_, page) => table.setPageIndex(page)}
+        rowsPerPage={table.getState().pagination.pageSize}
+        onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+        rowsPerPageOptions={[10, 25, 50]}
+        labelRowsPerPage="Satır Sayısı"
       />
     </Card>
   )

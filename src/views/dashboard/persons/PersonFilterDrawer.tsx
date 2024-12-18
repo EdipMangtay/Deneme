@@ -1,3 +1,5 @@
+'use client'
+
 // React Imports
 import { useState } from 'react'
 
@@ -21,7 +23,7 @@ import CustomTextField from '@core/components/mui/TextField'
 type Props = {
   open: boolean
   handleClose: () => void
-  personData: personType[]
+  fakeUsers: personType[]
   setData: (data: personType[]) => void
 }
 
@@ -33,9 +35,27 @@ type FormValues = {
   phone: string
 }
 
+const departmentMap: Record<number, string> = {
+  1: 'Mühendislik',
+  2: 'Proje Yönetimi',
+  3: 'Muhasebe',
+  4: 'Saha Operasyonları',
+  5: 'IT Destek',
+  6: 'Ar-Ge',
+  7: 'Satış',
+  8: 'Üretim',
+  9: 'Finans',
+  10: 'Teknik Destek',
+  11: 'Lojistik Yönetimi',
+  12: 'Müşteri Hizmetleri',
+  13: 'Halkla İlişkiler',
+  14: 'Kalite Kontrol',
+  15: 'Yazılım Geliştirme'
+}
+
 const PersonFilterDrawer = (props: Props) => {
   // Props
-  const { open, handleClose, personData, setData } = props
+  const { open, handleClose, fakeUsers, setData } = props
 
   // States
   const [role, setRole] = useState('')
@@ -57,23 +77,38 @@ const PersonFilterDrawer = (props: Props) => {
   })
 
   // Handle Form Submit
-  const handleFormSubmit = (data: FormValues) => {
-    const newData = {
-      id: personData.length + 1,
-      name: data.name,
-      role: data.role,
-      department: data.department,
-      email: data.email,
-      phone: data.phone
+  const handleFormSubmit = () => {
+    let filteredUsers = fakeUsers
+
+    // Rol'e göre filtreleme
+    if (role) {
+      filteredUsers = filteredUsers.filter(user => user.role === role)
     }
 
-    setData([...personData, newData])
-    handleReset()
+    // Departman'a göre filtreleme
+    if (department) {
+      // departmentMap'ten departman adını departmentId'ye çevir
+      const departmentId = Object.keys(departmentMap).find(
+        key => departmentMap[Number(key)] === department
+      )
+
+      if (departmentId) {
+        filteredUsers = filteredUsers.filter(user => user.departmentId === Number(departmentId))
+      }
+    }
+
+    console.log('Filtered Users:', filteredUsers)
+
+    // Filtrelenmiş veriyi güncelle
+    setData(filteredUsers)
+    handleClose()
   }
 
   // Handle Form Reset
   const handleReset = () => {
-    handleClose()
+    setRole('')
+    setDepartment('')
+    setData(fakeUsers) // Orijinal verileri geri yükler
     resetForm({
       name: '',
       role: '',
@@ -81,8 +116,7 @@ const PersonFilterDrawer = (props: Props) => {
       email: '',
       phone: ''
     })
-    setRole('')
-    setDepartment('')
+    handleClose()
   }
 
   return (
@@ -90,11 +124,11 @@ const PersonFilterDrawer = (props: Props) => {
       open={open}
       anchor='right'
       variant='temporary'
-      onClose={handleReset}
+      onClose={handleClose} // Pencereyi kapatırken sıfırlama yapmaz
       ModalProps={{ keepMounted: true }}
       sx={{ '& .MuiDrawer-paper': { width: { xs: 300, sm: 400 } } }}
     >
-      <div className='flex items-center justify-between pli-6 plb-5'>
+      <div className='flex items-center justify-between p-6'>
         <Typography variant='h5'>Filtreler</Typography>
         <IconButton size='small' onClick={handleReset}>
           <i className='tabler-x text-textSecondary text-2xl' />
@@ -102,11 +136,11 @@ const PersonFilterDrawer = (props: Props) => {
       </div>
       <Divider />
       <div className='p-6'>
-        <form onSubmit={handleSubmit(data => handleFormSubmit(data))} className='flex flex-col gap-5'>
+        <form onSubmit={handleSubmit(handleFormSubmit)} className='flex flex-col gap-5'>
           <CustomTextField select fullWidth label='Rol' value={role} onChange={e => setRole(e.target.value)}>
-            <MenuItem value='HouseHold'>Proje Sorumlusu</MenuItem>
-            <MenuItem value='Management'>Yönetici</MenuItem>
-            <MenuItem value='Electronics'>Saha Personeli</MenuItem>
+            <MenuItem value='Baş Mühendis'>Baş Mühendis</MenuItem>
+            <MenuItem value='Proje Sorumlusu'>Proje Sorumlusu</MenuItem>
+            <MenuItem value='Saha Personeli'>Saha Personeli</MenuItem>
           </CustomTextField>
           <CustomTextField
             select
@@ -115,13 +149,15 @@ const PersonFilterDrawer = (props: Props) => {
             value={department}
             onChange={e => setDepartment(e.target.value)}
           >
-            <MenuItem value='HouseHold'>Mekanik</MenuItem>
-            <MenuItem value='Management'>Elektrik</MenuItem>
-            <MenuItem value='Electronics'>İnşaat</MenuItem>
+            {Object.values(departmentMap).map(dep => (
+              <MenuItem key={dep} value={dep}>
+                {dep}
+              </MenuItem>
+            ))}
           </CustomTextField>
           <div className='flex items-center gap-4 justify-end'>
-            <Button variant='tonal' color='error' type='reset' onClick={handleReset}>
-              İptal
+            <Button variant='tonal' color='error' type='button' onClick={handleReset}>
+              Sıfırla
             </Button>
             <Button variant='contained' type='submit'>
               Uygula

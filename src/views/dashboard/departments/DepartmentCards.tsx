@@ -1,89 +1,76 @@
-import React from 'react'
-import Link from 'next/link'
-import { Box, Grid, Card, CardContent, Typography, Button, IconButton } from '@mui/material'
-import { FaEye } from 'react-icons/fa'
-import {fakeDepartments } from '@/utils/fakeData'
+// DepartmentCards.jsx
+'use client';
 
-const DepartmentCards = () => {
-  const departments = [
-    { name: 'Hatay Cephe Departmanı', users: 12 },
-    { name: 'Hatay Mühendislik Departmanı', users: 12 },
-    { name: 'Antakya IT Departmanı', users: 13 },
-    { name: 'Halkla İlişkiler Departmanı', users: 12 },
-    { name: 'Hatay Dizayn Departmanı', users: 12 },
-    { name: 'İstanbul Dizayn Departmanı', users: 12 }
-  ]
+import React from 'react';
+import Link from 'next/link';
+import { Box, Grid, Card, CardContent, Typography, IconButton } from '@mui/material';
+import { FaEdit, FaTrash } from 'react-icons/fa';
+
+interface Department {
+  id: number;
+  name: string;
+  companyId: number;
+  users?: number; // Kullanıcı sayısı
+}
+
+interface DepartmentCardsProps {
+  departments: Department[];
+}
+
+const DepartmentCards: React.FC<DepartmentCardsProps> = ({ departments }) => {
+  const handleDelete = (id: number) => {
+    console.log(`Departman ID: ${id} silindi.`);
+    // Silme işlemi için gerekli fonksiyonelliği ekleyebilirsiniz
+  };
 
   return (
-    <Box sx={{ flexGrow: 1, px: 4, py: 2 }}>
-      <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
-        Departmanlar
-      </Typography>
-
-      <Grid container spacing={2}>
-        {departments.map((dept, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index}>
+    <Box sx={{ flexGrow: 1, px: 1, py: 2 }}>
+      <Grid container spacing={3}>
+        {departments.map((dept) => (
+          <Grid item xs={12} sm={6} md={4} key={dept.id}>
             <Card
               sx={{
                 boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-                borderRadius: '10px',
-                p: 2
+                borderRadius: '12px',
+                p: 0.4,
               }}
             >
-              <CardContent sx={{ p: 0 }}>
+              <CardContent>
+                {/* Departman Adı */}
                 <Typography
-                  variant="h6"
-                  sx={{
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: '#212529',
-                    mb: 0.5
-                  }}
+                  variant="h5"
+                  sx={{ fontSize: '20px', fontWeight: 600 }}
                 >
                   {dept.name}
                 </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: '#6c757d',
-                    fontSize: '14px',
-                    fontWeight: 500
-                  }}
-                >
+                {/* Kullanıcı Sayısı */}
+                <Typography variant="body2" color="text.secondary">
                   {dept.users} Kullanıcı
                 </Typography>
-                <Box sx={{ textAlign: 'right', mt: 1 }}>
-                  <Button
-                    variant="text"
-                    sx={{
-                      textTransform: 'none',
-                      color: '#007bff',
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      padding: 0,
-                      minWidth: 0
-                    }}
-                  >
-                    <IconButton title="Detayları Gör">
-                      <FaEye />
-                    </IconButton>
-                  </Button>
+
+                {/* Düzenle Linki */}
+                <Box sx={{ textAlign: 'right', mt: 2 }}>
+                  <Link href={`/departments/${dept.id}/edit`} passHref>
+                    <Typography
+                      component="span"
+                      sx={{
+                        fontSize: '14px',
+                        color: '#007bff',
+                        cursor: 'pointer',
+                        fontWeight: 500,
+                      }}
+                    >
+                      Düzenle
+                    </Typography>
+                  </Link>
                 </Box>
               </CardContent>
             </Card>
           </Grid>
         ))}
       </Grid>
-
-      <Box sx={{ textAlign: 'right', mt: 4 }}>
-        <Link href="/departments/add" passHref>
-          <Button variant="contained" sx={{ textTransform: 'none', fontWeight: 500 }}>
-            + Yeni Departman Ekle
-          </Button>
-        </Link>
-      </Box>
     </Box>
-  )
-}
+  );
+};
 
-export default DepartmentCards
+export default DepartmentCards;

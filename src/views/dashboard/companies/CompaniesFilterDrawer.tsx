@@ -1,187 +1,220 @@
-// React Imports
-import { useEffect, useState } from 'react'
-
-// MUI Imports
-import Button from '@mui/material/Button'
-import Drawer from '@mui/material/Drawer'
-import IconButton from '@mui/material/IconButton'
-import Typography from '@mui/material/Typography'
-import Divider from '@mui/material/Divider'
-import TextField from '@mui/material/TextField'
-
-// Third-party Imports
-import { useForm } from 'react-hook-form'
+import React, { useEffect } from 'react';
+import Drawer from '@mui/material/Drawer';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
+import Divider from '@mui/material/Divider';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import { useForm, SubmitHandler } from 'react-hook-form';
 
 type CompanyData = {
-  id: number
-  taxNumber: string
-  taxOffice: string
-  name: string
-  manager: string
-  phone1: string
-  phone2: string
-  website: string
-  city: string
-  district: string
-}
+  id: number;
+  taxNumber: string;
+  taxOffice: string;
+  name: string;
+  manager: string;
+  phone1: string;
+  phone2: string;
+  website: string;
+  email: string;
+  secondEmail: string;
+  city: string;
+  district: string;
+};
 
 type Props = {
-  open: boolean
-  handleClose: () => void
-  companyData: CompanyData | null
-  handleUpdate: (updatedData: CompanyData) => void
-  company: CompanyData
-}
+  open: boolean;
+  handleClose: () => void;
+  companyData: CompanyData | null;
+  handleUpdate: (updatedData: CompanyData) => void;
+};
 
-// Form Values tipini tanımlıyoruz
-type FormValues = {
-  taxNumber: string
-  taxOffice: string
-  name: string
-  manager: string
-  phone1: string
-  phone2: string
-  website: string
-  city: string
-  district: string
-}
-
-const CompaniesFilterDrawer = ({ open, handleClose, companyData, handleUpdate }: Props) => {
-  // useForm ile default değerleri companyData ya da boş string olarak ayarlıyoruz.
-  const { register, reset, handleSubmit } = useForm<FormValues>({
-    defaultValues: {
-      taxNumber: companyData?.taxNumber || '10',
-      taxOffice: companyData?.taxOffice || 'Ataşehir',
-      name: companyData?.name || '',
-      manager: companyData?.manager || '',
-      phone1: companyData?.phone1 || '',
-      phone2: companyData?.phone2 || '',
-      website: companyData?.website || '',
-      city: companyData?.city || '',
-      district: companyData?.district || ''
-    }
-  })
-
-  // companyData değiştiğinde formu resetliyoruz
-  useEffect(() => {
-    if (companyData) {
-      reset({
-        taxNumber: companyData.taxNumber || '10',
-        taxOffice: companyData.taxOffice || 'Ataşehir',
-        name: companyData.name || '',
-        manager: companyData.manager || '',
-        phone1: companyData.phone1 || '',
-        phone2: companyData.phone2 || '',
-        website: companyData.website || '',
-        city: companyData.city || '',
-        district: companyData.district || ''
-      })
-    }
-  }, [companyData, reset])
-
-  const handleFormSubmit = (data: FormValues) => {
-    // form verilerini handleUpdate ile üst seviyeye iletiyoruz
-    if (companyData) {
-      const updatedData: CompanyData = {
-        ...companyData,
-        ...data
-      }
-      handleUpdate(updatedData)
-    }
-    handleClose()
-  }
-
-  const handleReset = () => {
-    reset({
-      taxNumber: '10',
-      taxOffice: 'Ataşehir',
+const CompaniesFilterDrawer: React.FC<Props> = ({
+  open,
+  handleClose,
+  companyData,
+  handleUpdate,
+}) => {
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<CompanyData>({
+    defaultValues: companyData || {
+      id: 0,
+      taxNumber: '',
+      taxOffice: '',
       name: '',
       manager: '',
       phone1: '',
       phone2: '',
       website: '',
+      email: '',
+      secondEmail: '',
       city: '',
-      district: ''
-    })
-    handleClose()
-  }
+      district: '',
+    },
+  });
+
+  useEffect(() => {
+    if (companyData) {
+      reset(companyData);
+    } else {
+      reset({
+        id: 0,
+        taxNumber: '',
+        taxOffice: '',
+        name: '',
+        manager: '',
+        phone1: '',
+        phone2: '',
+        website: '',
+        email: '',
+        secondEmail: '',
+        city: '',
+        district: '',
+      });
+    }
+  }, [companyData, reset]);
+
+  const onSubmit: SubmitHandler<CompanyData> = (data) => {
+    handleUpdate(data);
+    handleClose();
+  };
+
+  const onReset = () => {
+    if (companyData) {
+      reset(companyData);
+    } else {
+      reset({
+        id: 0,
+        taxNumber: '',
+        taxOffice: '',
+        name: '',
+        manager: '',
+        phone1: '',
+        phone2: '',
+        website: '',
+        email: '',
+        secondEmail: '',
+        city: '',
+        district: '',
+      });
+    }
+    handleClose();
+  };
 
   return (
     <Drawer
-      open={open}
       anchor="right"
-      variant="temporary"
-      onClose={handleReset}
+      open={open}
+      onClose={handleClose}
+      sx={{ '& .MuiDrawer-paper': { width: 400 } }}
       ModalProps={{ keepMounted: true }}
-      sx={{ '& .MuiDrawer-paper': { width: { xs: 300, sm: 400 } } }}
     >
-      <div className="flex items-center justify-between p-6">
+      <div className="flex items-center justify-between p-4">
         <Typography variant="h6">Şirket Düzenle</Typography>
-        <IconButton size="small" onClick={handleReset}>
-          <i className="tabler-x text-textSecondary text-2xl" />
+        <IconButton onClick={handleClose}>
+          <i className="tabler-x" />
         </IconButton>
       </div>
       <Divider />
-      <div className="p-6">
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col gap-4">
-          <TextField
-            fullWidth
-            label="Vergi Numarası"
-            {...register('taxNumber')}
-          />
-          <TextField
-            fullWidth
-            label="Vergi Dairesi"
-            {...register('taxOffice')}
-          />
-          <TextField
-            fullWidth
-            label="Şirket Adı"
-            {...register('name')}
-          />
-          <TextField
-            fullWidth
-            label="Şirket Sorumlusu"
-            {...register('manager')}
-          />
-          <TextField
-            fullWidth
-            label="Telefon Numarası"
-            {...register('phone1')}
-          />
-          <TextField
-            fullWidth
-            label="2. Telefon Numarası"
-            {...register('phone2')}
-          />
-          <TextField
-            fullWidth
-            label="Web Sitesi"
-            {...register('website')}
-          />
-          <TextField
-            fullWidth
-            label="İl"
-            {...register('city')}
-          />
-          <TextField
-            fullWidth
-            label="İlçe"
-            {...register('district')}
-          />
-
-          <div className="flex items-center gap-4 justify-end mt-6">
-            <Button variant="tonal" color="error" type="reset" onClick={handleReset}>
-              İptal
-            </Button>
-            <Button variant="contained" type="submit">
-              Düzenle
-            </Button>
-          </div>
-        </form>
-      </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="p-4">
+        <TextField
+          fullWidth
+          label="Vergi Numarası"
+          {...register('taxNumber', { required: 'Vergi Numarası zorunludur.' })}
+          margin="normal"
+          error={!!errors.taxNumber}
+          helperText={errors.taxNumber?.message}
+        />
+        <TextField
+          fullWidth
+          label="Vergi Dairesi"
+          {...register('taxOffice', { required: 'Vergi Dairesi zorunludur.' })}
+          margin="normal"
+          error={!!errors.taxOffice}
+          helperText={errors.taxOffice?.message}
+        />
+        <TextField
+          fullWidth
+          label="Şirket Adı"
+          {...register('name', { required: 'Şirket Adı zorunludur.' })}
+          margin="normal"
+          error={!!errors.name}
+          helperText={errors.name?.message}
+        />
+        <TextField
+          fullWidth
+          label="Şirket Sorumlusu"
+          {...register('manager', { required: 'Şirket Sorumlusu zorunludur.' })}
+          margin="normal"
+          error={!!errors.manager}
+          helperText={errors.manager?.message}
+        />
+        <TextField
+          fullWidth
+          label="Telefon 1"
+          {...register('phone1', { required: 'Telefon 1 zorunludur.' })}
+          margin="normal"
+          error={!!errors.phone1}
+          helperText={errors.phone1?.message}
+        />
+        <TextField
+          fullWidth
+          label="Telefon 2"
+          {...register('phone2')}
+          margin="normal"
+        />
+        <TextField
+          fullWidth
+          label="Web Sitesi"
+          {...register('website')}
+          margin="normal"
+        />
+        <TextField
+          fullWidth
+          label="Mail Adresi"
+          {...register('email', {
+            required: 'Mail Adresi zorunludur.',
+            pattern: {
+              value: /^\S+@\S+$/i,
+              message: 'Geçerli bir mail adresi giriniz.'
+            }
+          })}
+          margin="normal"
+          error={!!errors.email}
+          helperText={errors.email?.message}
+        />
+        <TextField
+          fullWidth
+          label="2. Mail Adresi"
+          {...register('secondEmail')}
+          margin="normal"
+        />
+        <TextField
+          fullWidth
+          label="Şehir"
+          {...register('city', { required: 'Şehir zorunludur.' })}
+          margin="normal"
+          error={!!errors.city}
+          helperText={errors.city?.message}
+        />
+        <TextField
+          fullWidth
+          label="İlçe"
+          {...register('district', { required: 'İlçe zorunludur.' })}
+          margin="normal"
+          error={!!errors.district}
+          helperText={errors.district?.message}
+        />
+        <div className="flex justify-end mt-4">
+          <Button type="button" variant="outlined" onClick={onReset}>
+            İptal
+          </Button>
+          <Button type="submit" variant="contained" sx={{ ml: 2 }}>
+            Kaydet
+          </Button>
+        </div>
+      </form>
     </Drawer>
-  )
-}
+  );
+};
 
-export default CompaniesFilterDrawer
+export default CompaniesFilterDrawer;

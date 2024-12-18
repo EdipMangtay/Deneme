@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { fakeCompanies } from '@/utils/fakeData';
 
-// MUI Imports
 import Card from '@mui/material/Card';
 import Button from '@mui/material/Button';
 import TablePagination from '@mui/material/TablePagination';
@@ -10,8 +9,8 @@ import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
+import { IconButton } from '@mui/material';
 
-// Third-party Imports
 import {
   createColumnHelper,
   flexRender,
@@ -20,93 +19,132 @@ import {
   getFilteredRowModel,
   useReactTable,
   FilterFn,
+  Row
 } from '@tanstack/react-table';
 import { rankItem } from '@tanstack/match-sorter-utils';
 
-// Style Imports
 import tableStyles from '@core/styles/table.module.css';
 import TablePaginationComponent from '@components/TablePaginationComponent';
 import CompaniesFilterDrawer from './CompaniesFilterDrawer';
-import { IconButton } from '@mui/material';
 
-// Şirket tipi
-type Company = {
+// CompanyData tipi, fakeCompanies veri yapısına uygun şekilde tanımlanmalı.
+// fakeCompanies verisinde email ve secondEmail gibi alanların da olduğundan emin olun.
+type CompanyData = {
+  id: number;
+  taxNumber: string;
+  taxOffice: string;
+  name: string;
+  manager: string;
+  phone1: string;
+  phone2: string;
+  website: string;
+  email: string;       // Bu alan fakeCompanies içinde olmalı
+  secondEmail: string; // Bu alan da fakeCompanies içinde olmalı
+  city: string;
+  district: string;
+};
+
+type TableCompany = {
   id: number;
   name: string;
   manager: string;
   phone: string;
-  email: string;
+  website: string;
 };
 
 // Fuzzy Filter
-const fuzzyFilter: FilterFn<Company> = (row, columnId, value, addMeta) => {
-  const itemRank = rankItem(row.getValue(columnId), value);
+const fuzzyFilter: FilterFn<TableCompany> = (row, columnId, value, addMeta) => {
+  const itemRank = rankItem(row.getValue(columnId) as string, value);
   addMeta({ itemRank });
   return itemRank.passed;
 };
 
-const companyData = fakeCompanies.map((company) =>({
-  id: company.id,
-  name: company.name,
-  manager: company.manager,
-  phone: '555-123-4567',
-  email: ''
-}))
+const columnHelper = createColumnHelper<TableCompany>();
 
-const columnHelper = createColumnHelper<Company>();
+// companyData'yı tabloya uygun hale getiriyoruz
+const companyDataForTable: TableCompany[] = fakeCompanies.map((c) => ({
+  id: c.id,
+  name: c.name,
+  manager: c.manager,
+  phone: c.phone1,    // phone alanı tablo için phone1'den alınıyor
+  website: c.website, // website alanı tablo için website alanından alınıyor
+}));
 
 const CompaniesTable = () => {
   const [globalFilter, setGlobalFilter] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<CompanyData | null>(null);
 
-  const handleFilterDrawerOpen = () => setFilterDrawerOpen(true);
+  const handleFilterDrawerOpen = (companyId: number) => {
+    const company = fakeCompanies.find((c) => c.id === companyId) || null;
+    setSelectedCompany(company);
+    setFilterDrawerOpen(true);
+  };
+
+  const handleFilterDrawerClose = () => {
+    setSelectedCompany(null);
+    setFilterDrawerOpen(false);
+  };
 
   const handleDelete = (id: number) => {
     console.log(`Şirket ID: ${id} silindi.`);
   };
 
-  const columns = useMemo(() => [
-    columnHelper.accessor('name', {
-      header: 'FİRMA ADI',
-      cell: ({ row }: { row: any }) => <Typography>{row.original.name}</Typography>,
-    }),
-    columnHelper.accessor('manager', {
-      header: 'FİRMA SORUMLUSU',
-      cell: ({ row }: { row: any }) => <Typography>{row.original.manager}</Typography>,
-    }),
-    {
-      id: 'actions',
-      header: 'İŞLEMLER',
-      cell: ({ row }: { row: any }) => (
-        <div className="flex items-center gap-2">
-          <IconButton title="Şirket Detayları" onClick={handleFilterDrawerOpen}>
-            <i className="tabler-eye" />
-          </IconButton>
-          <Link href="/tr/persons" passHref>
-            <IconButton title="Personeller">
-              <i className="tabler-users" />
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor('name', {
+        header: 'FİRMA ADI',
+        cell: ({ row }: { row: Row<TableCompany> }) => <Typography>{row.original.name}</Typography>,
+      }),
+      columnHelper.accessor('manager', {
+        header: 'FİRMA SORUMLUSU',
+        cell: ({ row }: { row: Row<TableCompany> }) => <Typography>{row.original.manager}</Typography>,
+      }),
+      columnHelper.accessor('phone', {
+        header: 'TELEFON',
+        cell: ({ row }: { row: Row<TableCompany> }) => <Typography>{row.original.phone}</Typography>,
+      }),
+      columnHelper.accessor('website', {
+        header: 'WEB SİTESİ',
+        cell: ({ row }: { row: Row<TableCompany> }) => <Typography>{row.original.website}</Typography>,
+      }),
+      {
+        id: 'actions',
+        header: 'İŞLEMLER',
+        cell: ({ row }: { row: Row<TableCompany> }) => (
+          <div className="flex items-center gap-2">
+            <IconButton
+              title="Şirket Detayları"
+              onClick={() => handleFilterDrawerOpen(row.original.id)}
+            >
+              <i className="tabler-eye" />
             </IconButton>
-          </Link>
-          <Link href="/tr/departments" passHref>
-            <IconButton title="Departmanlar">
-              <i className="tabler-building" />
+            <Link href={`/tr/persons?companyId=${row.original.id}`} passHref>
+              <IconButton title="Personeller">
+                <i className="tabler-users" />
+              </IconButton>
+            </Link>
+            <Link href={`/tr/departments?companyId=${row.original.id}`} passHref>
+              <IconButton title="Departmanlar">
+                <i className="tabler-building" />
+              </IconButton>
+            </Link>
+            <IconButton
+              title="Sil"
+              onClick={() => handleDelete(row.original.id)}
+            >
+              <i className="tabler-trash" />
             </IconButton>
-          </Link>
-          <IconButton
-            title="Sil"
-            onClick={() => handleDelete(row.original.id)}
-            style={{ color: '' }}
-          >
-            <i className="tabler-trash" />
-          </IconButton>
-        </div>
-      ),
-    },
-  ], []);
+          </div>
+        ),
+      },
+    ],
+    []
+  );
 
   const table = useReactTable({
-    data: companyData,
+    data: companyDataForTable,
     columns,
     filterFns: { fuzzy: fuzzyFilter },
     state: { globalFilter },
@@ -151,7 +189,9 @@ const CompaniesTable = () => {
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <th key={header.id}>{flexRender(header.column.columnDef.header, header.getContext())}</th>
+                    <th key={header.id}>
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </th>
                   ))}
                 </tr>
               ))}
@@ -169,7 +209,7 @@ const CompaniesTable = () => {
         </div>
         <TablePagination
           component={() => <TablePaginationComponent table={table} />}
-          count={companyData.length}
+          count={companyDataForTable.length}
           rowsPerPage={rowsPerPage}
           page={table.getState().pagination.pageIndex}
           onPageChange={(_, page) => table.setPageIndex(page)}
@@ -177,22 +217,14 @@ const CompaniesTable = () => {
           onRowsPerPageChange={(e) => setRowsPerPage(Number(e.target.value))}
         />
       </Card>
-      <CompaniesFilterDrawer
-        open={filterDrawerOpen}
-        handleClose={() => setFilterDrawerOpen(false)} companyData={null} handleUpdate={function (updatedData: { id: number; taxNumber: string; taxOffice: string; name: string; manager: string; phone1: string; phone2: string; website: string; city: string; district: string; }): void {
-          throw new Error('Function not implemented.');
-        } } company={{
-          id: 0,
-          taxNumber: '',
-          taxOffice: '',
-          name: '',
-          manager: '',
-          phone1: '',
-          phone2: '',
-          website: '',
-          city: '',
-          district: ''
-        }}      />
+      {selectedCompany && (
+        <CompaniesFilterDrawer
+          open={filterDrawerOpen}
+          handleClose={handleFilterDrawerClose}
+          companyData={selectedCompany}
+          handleUpdate={(updatedData) => console.log('Updated Company Data:', updatedData)}
+        />
+      )}
     </>
   );
 };

@@ -1,7 +1,10 @@
 'use client'
 
 // React Imports
-import { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { fakeUsers } from '@/utils/fakeData'
 
 // MUI Imports
 import Card from '@mui/material/Card'
@@ -10,7 +13,7 @@ import Checkbox from '@mui/material/Checkbox'
 import IconButton from '@mui/material/IconButton'
 import TablePagination from '@mui/material/TablePagination'
 import Typography from '@mui/material/Typography'
-import type { TextFieldProps } from '@mui/material/TextField'
+import TextField, { TextFieldProps } from '@mui/material/TextField'
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -19,38 +22,30 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
-  useReactTable,
   getFilteredRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
   getFacetedMinMaxValues,
   getPaginationRowModel,
-  getSortedRowModel
+  getSortedRowModel,
+  useReactTable
 } from '@tanstack/react-table'
 import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Component Imports
 import TablePaginationComponent from '@components/TablePaginationComponent'
-
-import OptionMenu from '@core/components/option-menu'
+import OptionMenu from '@core/components/option-menu' // Bu bileşenin içinde button render etmeyin
 import CustomTextField from '@core/components/mui/TextField'
+import PersonFilterDrawer from './PersonFilterDrawer'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
-import PersonFilterDrawer from './PersonFilterDrawer'
-import Link from '@/components/Link'
 
-declare module '@tanstack/table-core' {
-  interface FilterFns {
-    fuzzy: FilterFn<unknown>
-  }
-  interface FilterMeta {
-    itemRank: RankingInfo
-  }
-}
-
+// Type Definitions
 export type personType = {
+  departmentId: number
+  companyId: number // Şirket ID'si
   id: number
   name: string
   role: string
@@ -63,19 +58,14 @@ type PersonWithActionsType = personType & {
   actions?: string
 }
 
+// Fuzzy Filter
 const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
-  // Rank the item
-  const itemRank = rankItem(row.getValue(columnId), value)
-
-  // Store the itemRank info
-  addMeta({
-    itemRank
-  })
-
-  // Return if the item should be filtered in/out
+  const itemRank = rankItem(row.getValue(columnId) as string, value)
+  addMeta({ itemRank })
   return itemRank.passed
 }
 
+// Debounced Input Component
 const DebouncedInput = ({
   value: initialValue,
   onChange,
@@ -86,7 +76,6 @@ const DebouncedInput = ({
   onChange: (value: string | number) => void
   debounce?: number
 } & Omit<TextFieldProps, 'onChange'>) => {
-  // States
   const [value, setValue] = useState(initialValue)
 
   useEffect(() => {
@@ -99,217 +88,53 @@ const DebouncedInput = ({
     }, debounce)
 
     return () => clearTimeout(timeout)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value])
+  }, [value, onChange, debounce])
 
   return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />
 }
 
-// Vars
-const personData = [
-  {
-    id: 1,
-    name: 'Jordan Stevenson',
-    role: 'Proje Sorumlusu',
-    department: 'Mekanik',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 2,
-    name: 'Richard Payne',
-    role: 'Yönetici',
-    department: 'Mekanik',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 3,
-    name: 'Jennifer Summers',
-    role: 'Proje Sorumlusu',
-    department: 'Mekanik',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 4,
-    name: 'Mr. Justin Richardson',
-    role: 'Saha Personeli',
-    department: 'Elektrik',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 5,
-    name: 'Nicholas Tanner',
-    role: 'Saha Personeli',
-    department: 'Mekanik',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 6,
-    name: 'Crystal Mays',
-    role: 'Saha Personeli',
-    department: 'Mekanik',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 7,
-    name: 'Mary Garcia',
-    role: 'Saha Personeli',
-    department: 'İnşaat',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 8,
-    name: 'Megan Roberts',
-    role: 'Proje Sorumlusu',
-    department: 'İnşaat',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 9,
-    name: 'Joseph Oliver',
-    role: 'Saha Personeli',
-    department: 'İnşaat',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 10,
-    name: 'Amanda Green',
-    role: 'Proje Sorumlusu',
-    department: 'Mekanik',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 11,
-    name: 'Sophia Bennett',
-    role: 'Saha Personeli',
-    department: 'Elektrik',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 12,
-    name: 'Ethan Reed',
-    role: 'Yönetici',
-    department: 'İnşaat',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 13,
-    name: 'Olivia Morgan',
-    role: 'Saha Personeli',
-    department: 'Mekanik',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 14,
-    name: 'Liam Martinez',
-    role: 'Proje Sorumlusu',
-    department: 'Elektrik',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 15,
-    name: 'Mia Walker',
-    role: 'Yönetici',
-    department: 'İnşaat',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 16,
-    name: 'Daniel Cooper',
-    role: 'Saha Personeli',
-    department: 'Elektrik',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 17,
-    name: 'Emma Scott',
-    role: 'Proje Sorumlusu',
-    department: 'Mekanik',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 18,
-    name: 'James Brown',
-    role: 'Saha Personeli',
-    department: 'İnşaat',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 19,
-    name: 'Isabella Wilson',
-    role: 'Yönetici',
-    department: 'Mekanik',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 20,
-    name: 'Lucas Davis',
-    role: 'Saha Personeli',
-    department: 'Elektrik',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 21,
-    name: 'Ava King',
-    role: 'Proje Sorumlusu',
-    department: 'Mekanik',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 22,
-    name: 'Benjamin Lee',
-    role: 'Yönetici',
-    department: 'İnşaat',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 23,
-    name: 'Charlotte Miller',
-    role: 'Saha Personeli',
-    department: 'Elektrik',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  },
-  {
-    id: 24,
-    name: 'Noah Martinez',
-    role: 'Proje Sorumlusu',
-    department: 'Mekanik',
-    email: 'smthng@gmail.com',
-    phone: '5316258798'
-  }
-]
-
-// Column Definitions
 const columnHelper = createColumnHelper<PersonWithActionsType>()
 
+const departmentMap: Record<number, string> = {
+  1: 'Mühendislik',
+  2: 'Proje Yönetimi',
+  3: 'Muhasebe',
+  4: 'Saha Operasyonları',
+  5: 'IT Destek',
+  6: 'Ar-Ge',
+  7: 'Satış',
+  8: 'Üretim',
+  9: 'Finans',
+  10: 'Teknik Destek',
+  11: 'Lojistik Yönetimi',
+  12: 'Müşteri Hizmetleri',
+  13: 'Halkla İlişkiler',
+  14: 'Kalite Kontrol',
+  15: 'Yazılım Geliştirme'
+}
+
 const PersonTable = () => {
+  // URL'den companyId'yi almak için useSearchParams hook'unu kullanıyoruz
+  const searchParams = useSearchParams()
+  const companyIdParam = searchParams.get('companyId')
+  const companyId = companyIdParam ? Number(companyIdParam) : null
+
   // States
-  const [personFilterOpen, setPersonpersonFilterOpen] = useState(false)
+  const [personFilterOpen, setPersonFilterOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
-  const [data, setData] = useState(...[personData])
   const [globalFilter, setGlobalFilter] = useState('')
+
+  // Orijinal veriyi transform et ve sakla
+  const originalData = useMemo(() => {
+    return fakeUsers
+      .filter(user => (companyId ? user.companyId === companyId : true)) // companyId varsa filtrele
+      .map(user => ({
+        ...user,
+        department: departmentMap[user.departmentId] || 'Bilinmeyen Departman'
+      }))
+  }, [companyId])
+
+  const [filteredData, setFilteredData] = useState<PersonWithActionsType[]>(originalData)
 
   const columns = useMemo<ColumnDef<PersonWithActionsType, any>[]>(
     () => [
@@ -362,47 +187,49 @@ const PersonTable = () => {
       columnHelper.accessor('actions', {
         header: '',
         cell: ({ row }) => (
-          <div className='flex items-center'>
-            <IconButton>
+          <div className='flex items-center gap-2'>
+            {/* Silme Butonu */}
+            <IconButton onClick={() => handleDelete(row.original.id)} title='Sil'>
               <i className='tabler-trash text-textSecondary' />
             </IconButton>
-            <OptionMenu
-              iconButtonProps={{ size: 'medium' }}
-              iconClassName='text-textSecondary'
-              options={[
-                { text: 'Profili Görüntüle', icon: 'tabler-user' },
-                {
-                  text: 'Yetkiler',
-                  icon: 'tabler-settings',
-                  menuItemProps: {
-                    onClick: () => setData(data.filter(category => category.id !== row.original.id))
+
+            {/* OptionMenu Bileşenini Farklı Bir Eleman İçinde Kullanma */}
+            <div>
+              <OptionMenu
+                iconButtonProps={{ size: 'medium' }}
+                iconClassName='text-textSecondary'
+                options={[
+                  { text: 'Profili Görüntüle', icon: 'tabler-user' },
+                  {
+                    text: 'Yetkiler',
+                    icon: 'tabler-settings',
+                    menuItemProps: {
+                      onClick: () => handleDelete(row.original.id)
+                    }
                   }
-                }
-              ]}
-            />
+                ]}
+              />
+            </div>
           </div>
         ),
         enableSorting: false
       })
     ],
-    [data]
+    [filteredData]
   )
 
+  // Kullanıcı silme işlemi
+  const handleDelete = (id: number) => {
+    const newData = filteredData.filter(user => user.id !== id)
+    setFilteredData(newData)
+  }
+
   const table = useReactTable({
-    data: data as personType[],
+    data: filteredData,
     columns,
-    filterFns: {
-      fuzzy: fuzzyFilter
-    },
-    state: {
-      rowSelection,
-      globalFilter
-    },
-    initialState: {
-      pagination: {
-        pageSize: 10
-      }
-    },
+    filterFns: { fuzzy: fuzzyFilter },
+    state: { rowSelection, globalFilter },
+    initialState: { pagination: { pageSize: 10 } },
     enableRowSelection: true,
     globalFilterFn: fuzzyFilter,
     onRowSelectionChange: setRowSelection,
@@ -430,12 +257,12 @@ const PersonTable = () => {
             <Button
               variant='outlined'
               className='max-sm:is-full'
-              onClick={() => setPersonpersonFilterOpen(!personFilterOpen)}
+              onClick={() => setPersonFilterOpen(!personFilterOpen)}
               startIcon={<i className='tabler-adjustments-horizontal' />}
             >
               Filtreler
             </Button>
-            <Link href='/tr/persons/add'>
+            <Link href='/tr/persons/add' passHref>
               <Button variant='contained' className='max-sm:is-full' startIcon={<i className='tabler-plus' />}>
                 Yeni Kullanıcı Ekle
               </Button>
@@ -484,15 +311,13 @@ const PersonTable = () => {
                 {table
                   .getRowModel()
                   .rows.slice(0, table.getState().pagination.pageSize)
-                  .map(row => {
-                    return (
-                      <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
-                        {row.getVisibleCells().map(cell => (
-                          <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                        ))}
-                      </tr>
-                    )
-                  })}
+                  .map(row => (
+                    <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
+                      {row.getVisibleCells().map(cell => (
+                        <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                      ))}
+                    </tr>
+                  ))}
               </tbody>
             )}
           </table>
@@ -505,13 +330,15 @@ const PersonTable = () => {
           onPageChange={(_, page) => {
             table.setPageIndex(page)
           }}
+          rowsPerPageOptions={[10, 25, 50]}
+          onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
         />
       </Card>
       <PersonFilterDrawer
         open={personFilterOpen}
-        personData={data}
-        setData={setData}
-        handleClose={() => setPersonpersonFilterOpen(!personFilterOpen)}
+        fakeUsers={originalData} // Orijinal veriyi geçin
+        setData={setFilteredData} // Filtrelenmiş veriyi set et
+        handleClose={() => setPersonFilterOpen(false)} // OnClose'u sadece pencereyi kapatacak şekilde ayarlayın
       />
     </>
   )
