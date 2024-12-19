@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
+
 import CompaniesTable from './CompaniesTable';
 import CompanyDetailWidget from './CompanyDetail';
 

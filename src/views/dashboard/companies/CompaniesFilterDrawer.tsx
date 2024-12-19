@@ -1,11 +1,14 @@
 import React, { useEffect } from 'react';
+
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import { useForm, SubmitHandler } from 'react-hook-form';
+
+import type { SubmitHandler } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 
 type CompanyData = {
   id: number;

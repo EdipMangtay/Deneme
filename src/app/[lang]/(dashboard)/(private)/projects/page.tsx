@@ -1,11 +1,10 @@
-import { Typography } from '@mui/material'
-
 import { getMetadata } from '@/utils/getMetadata'
+import ProjectTable from '@/views/dashboard/projects/ProjectTable'
 
-export const metadata = getMetadata('Projeler')
+export const metadata = getMetadata('Personeller')
 
-const Projects = () => {
-  return <Typography variant='h5'>Projeler</Typography>
+const Persons = () => {
+  return <ProjectTable/>
 }
 
-export default Projects
+export default Persons

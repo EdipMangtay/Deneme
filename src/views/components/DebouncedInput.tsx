@@ -7,8 +7,10 @@ import type { ChangeEvent } from 'react';
 import React, { useEffect, useState } from 'react'
 
 // MUI Imports
+
 import type { TextFieldProps } from '@mui/material';
-import { TextField } from '@mui/material'
+
+import CustomTextField from '@core/components/mui/TextField'
 
 // Tip Tanımlamaları
 interface DebouncedInputProps extends Omit<TextFieldProps, 'onChange'> {
@@ -44,7 +46,7 @@ const DebouncedInput: React.FC<DebouncedInputProps> = ({
   }
 
   return (
-    <TextField
+    <CustomTextField
       {...props}
       value={value}
       onChange={handleInputChange}

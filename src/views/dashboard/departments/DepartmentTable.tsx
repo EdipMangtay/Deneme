@@ -1,55 +1,89 @@
-'use client'
+'use client';
 
-import React, { useMemo, useState } from 'react'
+// React Imports
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 
-import Card from '@mui/material/Card'
-import Checkbox from '@mui/material/Checkbox'
-import TablePagination from '@mui/material/TablePagination'
-import Typography from '@mui/material/Typography'
-import IconButton from '@mui/material/IconButton'
-import Button from '@mui/material/Button'
-import DeleteIcon from '@mui/icons-material/Delete'
-import MoreVertIcon from '@mui/icons-material/MoreVert'
-import { FaEye } from 'react-icons/fa'
-import { rankItem } from '@tanstack/match-sorter-utils'
+import Link from 'next/link';
+
+// MUI Imports
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import TablePagination from '@mui/material/TablePagination';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
+
+// Third-party Imports
+import classNames from 'classnames';
+import { rankItem } from '@tanstack/match-sorter-utils';
 import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
   useReactTable,
   getFilteredRowModel,
-  getPaginationRowModel
-} from '@tanstack/react-table'
-import type { ColumnDef, FilterFn } from '@tanstack/react-table'
+  getPaginationRowModel,
+  getSortedRowModel
+} from '@tanstack/react-table';
+import type { ColumnDef, FilterFn } from '@tanstack/react-table';
 
-import { Box } from '@mui/material'
+// Component Imports
+import DebouncedInput from '../../components/DebouncedInput';
+import TablePaginationComponent from '@components/TablePaginationComponent';
+import OptionMenu from '@core/components/option-menu'; // PersonTable'deki gibi kullan
 
-import DebouncedInput from '../../components/DebouncedInput'
+// Style Imports
+import tableStyles from '@core/styles/table.module.css';
 
 // Props for DepartmentTable
 interface Person {
-  id: number
-  name: string
-  role: string
-  email: string
-  phone: string
-  departmentName?: string
+  id: number;
+  name: string;
+  role: string;
+  email: string;
+  phone: string;
+  departmentName?: string;
 }
 
 interface DepartmentTableProps {
-  users: Person[]
+  users: Person[];
 }
 
 const fuzzyFilter: FilterFn<any> = (row, columnId, value) => {
-  const itemRank = rankItem(row.getValue(columnId), value)
-  
-  return itemRank.passed
-}
+  const itemRank = rankItem(row.getValue(columnId), value);
 
-const columnHelper = createColumnHelper<Person>()
+  return itemRank.passed;
+};
+
+const columnHelper = createColumnHelper<Person>();
 
 const DepartmentTable: React.FC<DepartmentTableProps> = ({ users }) => {
-  const [globalFilter, setGlobalFilter] = useState('')
+  const [data, setData] = useState<Person[]>(users); // Veri durumunu yönetin
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+
+  // Gelen users prop'u değiştiğinde data'yı güncelle
+  useEffect(() => {
+    setData(users);
+  }, [users]);
+
+  // useCallback ile fonksiyonları sarmala
+  const handleDelete = useCallback((id: number) => {
+    setData(prevData => prevData.filter(user => user.id !== id));
+  }, []);
+
+  const handlePermissions = useCallback((id: number) => {
+    console.log(`Yetkiler düzenlenecek: ${id}`);
+
+    // Yetkiler düzenleme mantığını buraya ekleyin
+  }, []);
+
+  const handleViewDetails = useCallback((id: number) => {
+    console.log(`Detayları görüntüle: ${id}`);
+
+    // Detay görüntüleme mantığını buraya ekleyin
+  }, []);
 
   const columns = useMemo<ColumnDef<Person, any>[]>(
     () => [
@@ -57,15 +91,20 @@ const DepartmentTable: React.FC<DepartmentTableProps> = ({ users }) => {
         id: 'select',
         header: ({ table }) => (
           <Checkbox
-            indeterminate={table.getIsSomePageRowsSelected()}
-            checked={table.getIsAllPageRowsSelected()}
-            onChange={table.getToggleAllRowsSelectedHandler()}
+            {...{
+              checked: table.getIsAllRowsSelected(),
+              indeterminate: table.getIsSomeRowsSelected(),
+              onChange: table.getToggleAllRowsSelectedHandler()
+            }}
           />
         ),
         cell: ({ row }) => (
           <Checkbox
-            checked={row.getIsSelected()}
-            onChange={row.getToggleSelectedHandler()}
+            {...{
+              checked: row.getIsSelected(),
+              indeterminate: row.getIsSomeSelected(),
+              onChange: row.getToggleSelectedHandler()
+            }}
           />
         )
       },
@@ -89,89 +128,141 @@ const DepartmentTable: React.FC<DepartmentTableProps> = ({ users }) => {
         id: 'actions',
         header: '',
         cell: ({ row }) => (
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <IconButton title="Detayları Gör" onClick={() => handleViewDetails(row.original.id)}>
-              <FaEye />
+          <div className='flex items-center gap-2'>
+            {/* Silme Butonu */}
+            <IconButton
+              title="Sil"
+              onClick={() => handleDelete(row.original.id)}
+            >
+              <i className="tabler-trash" />
             </IconButton>
-            <IconButton title="Yetkiler" onClick={() => handlePermissions(row.original.id)}>
-              <MoreVertIcon />
-            </IconButton>
-            <IconButton title="Sil" onClick={() => handleDelete(row.original.id)}>
-              <DeleteIcon />
-            </IconButton>
+
+            {/* OptionMenu Bileşeni */}
+            <OptionMenu
+              iconButtonProps={{ size: 'medium', 'aria-label': 'Diğer seçenekler' }}
+              iconClassName='text-textSecondary'
+              options={[
+                {
+                  text: 'Detayları Gör',
+                  icon: 'tabler-eye',
+                  menuItemProps: {
+                    onClick: () => handleViewDetails(row.original.id)
+                  }
+                },
+                {
+                  text: 'Yetkiler',
+                  icon: 'tabler-settings',
+                  menuItemProps: {
+                    onClick: () => handlePermissions(row.original.id)
+                  }
+                }
+              ]}
+            />
           </div>
-        )
+        ),
+        enableSorting: false
       }
     ],
-    []
-  )
-
-  const handleDelete = (id: number) => console.log(`Kullanıcı ID: ${id} silindi.`)
-  const handlePermissions = (id: number) => console.log(`Yetkiler düzenlenecek: ${id}`)
-  const handleViewDetails = (id: number) => console.log(`Detayları görüntüle: ${id}`)
+    [handleDelete, handlePermissions, handleViewDetails]
+  );
 
   const table = useReactTable({
-    data: users,
+    data,
     columns,
     filterFns: { fuzzy: fuzzyFilter },
-    state: { globalFilter },
-    globalFilterFn: fuzzyFilter,
+    state: { rowSelection, globalFilter },
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel()
-  })
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    enableRowSelection: true,
+    globalFilterFn: fuzzyFilter
+  });
 
   return (
     <Card sx={{ p: 3, boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
+      <CardContent className='flex justify-between items-center flex-wrap gap-4 p-6'>
         <DebouncedInput
-          value={globalFilter}
-          onChange={value => setGlobalFilter(value.toString())}
-          placeholder="Kullanıcı Ara"
+          value={globalFilter ?? ''}
+          onChange={value => setGlobalFilter(String(value))}
+          placeholder='Kullanıcı Ara'
           debounce={500}
+          className='max-sm:w-full'
         />
-        <Button variant="contained">+ Departmana Kullanıcı Ekle</Button>
-      </Box>
+        <div className='flex items-center gap-2'>
+          <Link href='/tr/departments/add' passHref>
+            <Button variant='contained' startIcon={<i className='tabler-plus' />}>
+              Departmana Kullanıcı Ekle
+            </Button>
+          </Link>
 
-      <div className="overflow-x-auto">
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        </div>
+      </CardContent>
+      <div className='overflow-x-auto'>
+        <table className={tableStyles.table}>
           <thead>
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map(header => (
-                  <th key={header.id} style={{ padding: '12px', textAlign: 'left' }}>
-                    {flexRender(header.column.columnDef.header, header.getContext())}
+                  <th key={header.id} className='px-4 py-2 border-b'>
+                    {header.isPlaceholder ? null : (
+                      <>
+                        <div
+                          className={classNames({
+                            'flex items-center': header.column.getIsSorted(),
+                            'cursor-pointer select-none': header.column.getCanSort()
+                          })}
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                          {{
+                            asc: <i className='tabler-chevron-up text-xl' />,
+                            desc: <i className='tabler-chevron-down text-xl' />
+                          }[header.column.getIsSorted() as 'asc' | 'desc'] ?? null}
+                        </div>
+                      </>
+                    )}
                   </th>
                 ))}
               </tr>
             ))}
           </thead>
-          <tbody>
-            {table.getRowModel().rows.map(row => (
-              <tr key={row.id}>
-                {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} style={{ padding: '12px' }}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
+          {table.getFilteredRowModel().rows.length === 0 ? (
+            <tbody>
+              <tr>
+                <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                  No data available
+                </td>
               </tr>
-            ))}
-          </tbody>
+            </tbody>
+          ) : (
+            <tbody>
+              {table.getRowModel().rows.map(row => (
+                <tr key={row.id}>
+                  {row.getVisibleCells().map(cell => (
+                    <td key={cell.id} className='px-4 py-2 border-b'>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          )}
         </table>
       </div>
-
       <TablePagination
-        component="div"
+        component={() => <TablePaginationComponent table={table} />}
         count={table.getFilteredRowModel().rows.length}
+        rowsPerPage={table.getState().pagination.pageSize}
         page={table.getState().pagination.pageIndex}
         onPageChange={(_, page) => table.setPageIndex(page)}
-        rowsPerPage={table.getState().pagination.pageSize}
         onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
         rowsPerPageOptions={[10, 25, 50]}
         labelRowsPerPage="Satır Sayısı"
       />
     </Card>
-  )
-}
+  );
+};
 
-export default DepartmentTable
+export default DepartmentTable;
