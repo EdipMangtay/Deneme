@@ -1,10 +1,11 @@
-// DepartmentCards.jsx
+// DepartmentCards.tsx
 'use client';
 
 import React from 'react';
+
 import Link from 'next/link';
-import { Box, Grid, Card, CardContent, Typography, IconButton } from '@mui/material';
-import { FaEdit, FaTrash } from 'react-icons/fa';
+
+import { Box, Grid, Card, CardContent, Typography, Button} from '@mui/material';
 
 interface Department {
   id: number;
@@ -15,13 +16,10 @@ interface Department {
 
 interface DepartmentCardsProps {
   departments: Department[];
+  companyId: number; // Yeni eklenen prop
 }
 
-const DepartmentCards: React.FC<DepartmentCardsProps> = ({ departments }) => {
-  const handleDelete = (id: number) => {
-    console.log(`Departman ID: ${id} silindi.`);
-    // Silme işlemi için gerekli fonksiyonelliği ekleyebilirsiniz
-  };
+const DepartmentCards: React.FC<DepartmentCardsProps> = ({ departments, companyId }) => {
 
   return (
     <Box sx={{ flexGrow: 1, px: 1, py: 2 }}>
@@ -50,7 +48,7 @@ const DepartmentCards: React.FC<DepartmentCardsProps> = ({ departments }) => {
 
                 {/* Düzenle Linki */}
                 <Box sx={{ textAlign: 'right', mt: 2 }}>
-                  <Link href={`/departments/${dept.id}/edit`} passHref>
+                  <Link href={`/tr/companies/${companyId}/departments/${dept.id}/edit`} passHref>
                     <Typography
                       component="span"
                       sx={{
@@ -69,6 +67,23 @@ const DepartmentCards: React.FC<DepartmentCardsProps> = ({ departments }) => {
           </Grid>
         ))}
       </Grid>
+
+    <Link href={`/tr/departments/add`} passHref>
+    <Button
+    variant="contained"
+    style={{
+    marginTop: '20px',
+    marginRight: '10px',
+    marginLeft: 'auto',
+    display: 'block',
+    padding: '16px 40px',
+
+  }}
+  >
+  +Yeni Departman Ekle
+  </Button>
+  </Link>
+
     </Box>
   );
 };

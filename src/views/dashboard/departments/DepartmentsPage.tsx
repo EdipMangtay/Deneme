@@ -1,9 +1,12 @@
-// DepartmentsPage.jsx
+// DepartmentsPage.tsx
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+
 import { useSearchParams } from 'next/navigation';
+
 import { Box, Typography } from '@mui/material';
+
 import DepartmentCards from './DepartmentCards';
 import DepartmentTable from './DepartmentTable';
 import { fakeDepartments, fakeUsers } from '@/utils/fakeData';
@@ -18,6 +21,7 @@ const DepartmentsPage = () => {
   // URL'den companyId al ve state'i güncelle
   useEffect(() => {
     const companyIdFromUrl = searchParams.get('companyId');
+
     if (companyIdFromUrl && !isNaN(Number(companyIdFromUrl))) {
       setSelectedCompanyId(Number(companyIdFromUrl));
     } else {
@@ -34,6 +38,7 @@ const DepartmentsPage = () => {
   const departmentsWithUserCount = useMemo(() => {
     return filteredDepartments.map(dept => {
       const userCount = fakeUsers.filter(user => user.departmentId === dept.id).length;
+
       return { ...dept, users: userCount };
     });
   }, [filteredDepartments]);
@@ -41,7 +46,9 @@ const DepartmentsPage = () => {
   // Şirketin departmanlarına ait kullanıcıları filtrele
   const filteredUsers = useMemo(() => {
     const departmentIds = filteredDepartments.map(dept => dept.id);
+    
     return fakeUsers
+
       .filter(user => departmentIds.includes(user.departmentId))
       .map(user => ({
         ...user,
@@ -57,7 +64,7 @@ const DepartmentsPage = () => {
       </Typography>
 
       {/* Departman Kartları */}
-      <DepartmentCards departments={departmentsWithUserCount} />
+      <DepartmentCards departments={departmentsWithUserCount} companyId={selectedCompanyId} />
 
       {/* Kullanıcı Listesi Başlığı ve Alt Başlık */}
       <Typography

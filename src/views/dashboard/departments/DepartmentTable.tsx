@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useMemo, useState } from 'react'
+
 import Card from '@mui/material/Card'
 import Checkbox from '@mui/material/Checkbox'
 import TablePagination from '@mui/material/TablePagination'
@@ -20,7 +21,9 @@ import {
   getPaginationRowModel
 } from '@tanstack/react-table'
 import type { ColumnDef, FilterFn } from '@tanstack/react-table'
+
 import { Box } from '@mui/material'
+
 import DebouncedInput from '../../components/DebouncedInput'
 
 // Props for DepartmentTable
@@ -39,6 +42,7 @@ interface DepartmentTableProps {
 
 const fuzzyFilter: FilterFn<any> = (row, columnId, value) => {
   const itemRank = rankItem(row.getValue(columnId), value)
+  
   return itemRank.passed
 }
 

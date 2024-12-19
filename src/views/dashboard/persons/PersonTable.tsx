@@ -2,9 +2,10 @@
 
 // React Imports
 import React, { useEffect, useMemo, useState } from 'react'
+
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { fakeUsers } from '@/utils/fakeData'
+
 
 // MUI Imports
 import Card from '@mui/material/Card'
@@ -13,7 +14,7 @@ import Checkbox from '@mui/material/Checkbox'
 import IconButton from '@mui/material/IconButton'
 import TablePagination from '@mui/material/TablePagination'
 import Typography from '@mui/material/Typography'
-import TextField, { TextFieldProps } from '@mui/material/TextField'
+import type { TextFieldProps } from '@mui/material/TextField';
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -31,7 +32,9 @@ import {
   useReactTable
 } from '@tanstack/react-table'
 import type { ColumnDef, FilterFn } from '@tanstack/react-table'
-import type { RankingInfo } from '@tanstack/match-sorter-utils'
+
+import { fakeUsers } from '@/utils/fakeData'
+
 
 // Component Imports
 import TablePaginationComponent from '@components/TablePaginationComponent'
@@ -61,7 +64,9 @@ type PersonWithActionsType = personType & {
 // Fuzzy Filter
 const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   const itemRank = rankItem(row.getValue(columnId) as string, value)
+
   addMeta({ itemRank })
+
   return itemRank.passed
 }
 
@@ -221,6 +226,7 @@ const PersonTable = () => {
   // Kullanıcı silme işlemi
   const handleDelete = (id: number) => {
     const newData = filteredData.filter(user => user.id !== id)
+
     setFilteredData(newData)
   }
 

@@ -1,6 +1,17 @@
-import React, { useEffect, useState, ChangeEvent } from 'react'
+// components/DebouncedInput.tsx
 
-interface DebouncedInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+'use client'
+
+// React Imports
+import type { ChangeEvent } from 'react';
+import React, { useEffect, useState } from 'react'
+
+// MUI Imports
+import type { TextFieldProps } from '@mui/material';
+import { TextField } from '@mui/material'
+
+// Tip Tanımlamaları
+interface DebouncedInputProps extends Omit<TextFieldProps, 'onChange'> {
   value: string | number
   onChange: (value: string | number) => void
   debounce?: number
@@ -14,7 +25,7 @@ const DebouncedInput: React.FC<DebouncedInputProps> = ({
 }) => {
   const [value, setValue] = useState<string | number>(initialValue)
 
-  // Değer güncelleme
+  // İlk değeri güncelle
   useEffect(() => {
     setValue(initialValue)
   }, [initialValue])
@@ -33,17 +44,11 @@ const DebouncedInput: React.FC<DebouncedInputProps> = ({
   }
 
   return (
-    <input
+    <TextField
       {...props}
       value={value}
-      onChange={handleInputChange} // Değeri state'e set eder
-      style={{
-        padding: '8px',
-        border: '1px solid #ddd',
-        borderRadius: '4px',
-        width: '200px',
-        ...props.style // Ek stil varsa
-      }}
+      onChange={handleInputChange}
+      variant="outlined"
     />
   )
 }
