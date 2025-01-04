@@ -231,7 +231,7 @@ const CompaniesTable = () => {
             <Button variant="contained" startIcon={<i className="tabler-plus" />}>
               Yeni Şirket Ekle
             </Button>
-            </Link> 
+            </Link>
             {/* Global Toplu Silme İkonu */}
             <IconButton
               onClick={handleBulkDelete}
